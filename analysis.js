@@ -115,6 +115,12 @@ function complexity(filePath)
 	// Tranverse program with a function visitor.
 	traverseWithParents(ast, function (node) 
 	{
+		if (node.type === 'CallExpression' && node.callee.name==='require'){
+			fileBuilder.ImportCount++;
+		}
+		if (node.type === 'ImportDeclaration') {
+			fileBuilder.ImportCount++;
+		}
 		if (node.type === 'FunctionDeclaration') 
 		{
 			var builder = new FunctionBuilder();
@@ -122,9 +128,20 @@ function complexity(filePath)
 			builder.FunctionName = functionName(node);
 			builder.StartLine    = node.loc.start.line;
 
-			builders[builder.FunctionName] = builder;
-		}
+			builder.ParameterCount = node.params.length;
 
+			console.log(node);
+			traverseWithParents(node, function (node) 
+			{
+				if(isDecision(node)){
+					builder.SimpleCyclomaticComplexity++;
+				}
+			});
+
+			builders[builder.FunctionName] = builder;
+			
+		}
+		
 	});
 
 }
