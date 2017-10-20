@@ -115,13 +115,13 @@ function complexity(filePath)
 	// Tranverse program with a function visitor.
 	traverseWithParents(ast, function (node) 
 	{
-		if (node.type === 'CallExpression' && node.callee.name==='require'){
+		if (node.type == 'CallExpression' && node.callee.name=='require'){
 			fileBuilder.ImportCount++;
 		}
-		if (node.type === 'ImportDeclaration') {
+		if (node.type == 'ImportDeclaration') {
 			fileBuilder.ImportCount++;
 		}
-		if (node.type === 'FunctionDeclaration') 
+		if (node.type == 'FunctionDeclaration') 
 		{
 			var builder = new FunctionBuilder();
 
@@ -129,12 +129,28 @@ function complexity(filePath)
 			builder.StartLine    = node.loc.start.line;
 
 			builder.ParameterCount = node.params.length;
+			builder.MaxConditions = 0;
 
 			console.log(node);
 			traverseWithParents(node, function (node) 
 			{
 				if(isDecision(node)){
 					builder.SimpleCyclomaticComplexity++;
+					if( node.type == 'ForStatement' || node.type == 'IfStatement' || node.type == 'WhileStatement' || node.type == 'DoWhileStatement'){
+						var count=0;
+						if(node.test.hasOwnProperty("expressions")){
+							count = node.test.expressions.length;
+						}
+						traverseWithParents(node.test, function (node){
+							if(node.operator=='&&' || node.operator=='||'){
+								count++;
+							}
+							if(count>builder.MaxConditions){
+								builder.MaxConditions = count;
+							}
+						}); 
+
+					}
 				}
 			});
 
